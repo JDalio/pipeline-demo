@@ -5,25 +5,22 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.support.transaction.ResourcelessTransactionManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
 
 @Configuration
 @EnableBatchProcessing
-public class Config {
+@EnableConfigurationProperties(Properties.class)
+public class BatchConfig {
+
+    private Properties properties;
 
     @Autowired
     private JobBuilderFactory jobs;
@@ -32,27 +29,12 @@ public class Config {
     private StepBuilderFactory steps;
 
     @Bean
-    public PlatformTransactionManager transactionManager() {
-        return new ResourcelessTransactionManager();
+    public Properties property() {
+        return new Properties();
     }
 
-//    @Bean
-//    public JobLauncherTestUtils jobLauncherTestUtils() {
-//        return new JobLauncherTestUtils();
-//    }
-
-    @Bean
-    public JobRepository jobRepository() throws Exception {
-        MapJobRepositoryFactoryBean factory = new MapJobRepositoryFactoryBean();
-        factory.setTransactionManager(transactionManager());
-        return (JobRepository) factory.getObject();
-    }
-
-    @Bean
-    public JobLauncher jobLauncher() throws Exception {
-        SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
-        jobLauncher.setJobRepository(jobRepository());
-        return jobLauncher;
+    public BatchConfig(Properties properties) {
+        this.properties = properties;
     }
 
     @Bean
@@ -72,9 +54,10 @@ public class Config {
 
     @Bean
     protected Step processLines(ItemReader<Line> reader, ItemProcessor<Line, List<Allele>> processor, ItemWriter<List<Allele>> writer) {
+        System.out.println(properties.getChunkSize());
         return steps
                 .get("processLines")
-                .<Line, List<Allele>>chunk(10)
+                .<Line, List<Allele>>chunk(properties.getChunkSize())
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
