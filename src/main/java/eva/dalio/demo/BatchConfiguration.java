@@ -18,24 +18,13 @@ import java.util.List;
 @Configuration
 @EnableBatchProcessing
 @EnableConfigurationProperties(Properties.class)
-public class BatchConfig {
-
-    private Properties properties;
+public class BatchConfiguration {
 
     @Autowired
     private JobBuilderFactory jobs;
 
     @Autowired
     private StepBuilderFactory steps;
-
-    @Bean
-    public Properties property() {
-        return new Properties();
-    }
-
-    public BatchConfig(Properties properties) {
-        this.properties = properties;
-    }
 
     @Bean
     public ItemReader<Line> itemReader() {
@@ -71,4 +60,15 @@ public class BatchConfig {
                 .start(processLines(itemReader(), itemProcessor(), itemWriter()))
                 .build();
     }
+
+    @Bean
+    public Properties property() {
+        return new Properties();
+    }
+
+    public BatchConfiguration(Properties properties) {
+        this.properties = properties;
+    }
+
+    private Properties properties;
 }
